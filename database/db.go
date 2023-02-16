@@ -26,12 +26,8 @@ type Connection struct {
 	db *gorm.DB
 }
 
-var GlobalConnection *Connection
-
-// InitGlobalDbConnection Since connection with database is pooled, we can instantiate single connection
-// for the whole server
-func InitGlobalDbConnection() {
-	GlobalConnection = NewConnection(&Credentials{
+func InitDefaultConnection() *Connection {
+	return NewConnection(&Credentials{
 		Username: DB_USERNAME,
 		Password: DB_PASSWORD,
 		Name:     DB_NAME,

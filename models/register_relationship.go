@@ -49,3 +49,7 @@ func getUnsuspendedStudentsRegisteredToTeacher(teacherEmail string, mentionedStu
 
 	return studentEmails, err
 }
+
+func deleteAllRegisterRelationships(db *gorm.DB) error {
+	return db.Exec("DELETE FROM register_relationships").Error
+}

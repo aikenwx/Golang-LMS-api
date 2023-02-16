@@ -1,18 +1,21 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin"
+	"learning-management-system/database"
 	"learning-management-system/helpers"
 	"learning-management-system/models"
 	"learning-management-system/types"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type TeacherRepository struct {
+	connection *database.Connection
 }
 
-func NewTeacherRepo() *TeacherRepository {
-	return &TeacherRepository{}
+func NewTeacherRepo(connection *database.Connection) *TeacherRepository {
+	return &TeacherRepository{connection: connection}
 }
 
 func (teacherRepository *TeacherRepository) RegisterStudentsToTeacher(context *gin.Context) {
@@ -20,7 +23,8 @@ func (teacherRepository *TeacherRepository) RegisterStudentsToTeacher(context *g
 	studentRegistration := types.RegisterStudentsToTeacherRequest{}
 
 	if contextErr := context.ShouldBindJSON(&studentRegistration); contextErr != nil {
-		generateBadRequestErrorResponse(context, contextErr)
+
+		generateBadRequestErrorResponse(context, helpers.GenerateInvalidRequestsError())
 		return
 	}
 
@@ -29,7 +33,7 @@ func (teacherRepository *TeacherRepository) RegisterStudentsToTeacher(context *g
 		return
 	}
 
-	if err := models.RegisterStudentsToTeacher(studentRegistration.TeacherEmail, studentRegistration.StudentEmails); err != nil {
+	if err := models.RegisterStudentsToTeacher(studentRegistration.TeacherEmail, studentRegistration.StudentEmails, teacherRepository.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}
@@ -41,16 +45,16 @@ func (teacherRepository *TeacherRepository) SuspendStudent(context *gin.Context)
 	studentSuspension := &types.StudentSuspensionReceiveRequest{}
 
 	if err := context.ShouldBindJSON(studentSuspension); err != nil {
+		generateBadRequestErrorResponse(context, helpers.GenerateInvalidRequestsError())
+		return
+	}
+
+	if err := helpers.ValidateEmailFormat(studentSuspension.StudentEmail); err != nil {
 		generateBadRequestErrorResponse(context, err)
 		return
 	}
 
-	if err := helpers.ValidateEmailAddress(studentSuspension.StudentEmail); err != nil {
-		generateBadRequestErrorResponse(context, err)
-		return
-	}
-
-	if err := models.SuspendStudent(studentSuspension.StudentEmail); err != nil {
+	if err := models.SuspendStudent(studentSuspension.StudentEmail, teacherRepository.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}
@@ -62,16 +66,16 @@ func (teacherRepository *TeacherRepository) RetrieveCommonStudents(context *gin.
 	registeredStudentRetrieval := &types.RetrieveCommonStudentsRequest{}
 
 	if err := context.ShouldBindQuery(registeredStudentRetrieval); err != nil {
+		generateBadRequestErrorResponse(context, helpers.GenerateInvalidRequestsError())
+		return
+	}
+
+	if err := helpers.ValidateEmailFormat(registeredStudentRetrieval.TeacherEmail); err != nil {
 		generateBadRequestErrorResponse(context, err)
 		return
 	}
 
-	if err := helpers.ValidateEmailAddress(registeredStudentRetrieval.TeacherEmail); err != nil {
-		generateBadRequestErrorResponse(context, err)
-		return
-	}
-
-	studentEmails, dbErr := models.RetrieveCommonStudents(registeredStudentRetrieval.TeacherEmail)
+	studentEmails, dbErr := models.RetrieveCommonStudents(registeredStudentRetrieval.TeacherEmail, teacherRepository.connection)
 	if dbErr != nil {
 		generateInternalServerErrorResponse(context, dbErr)
 		return
@@ -86,17 +90,17 @@ func (teacherRepository *TeacherRepository) RetrieveStudentRecipients(context *g
 	retrieveStudentRecipientsRequest := &types.RetrieveStudentRecipientsRequest{}
 
 	if contextErr := context.ShouldBindJSON(retrieveStudentRecipientsRequest); contextErr != nil {
-		generateBadRequestErrorResponse(context, contextErr)
+		generateBadRequestErrorResponse(context, helpers.GenerateInvalidRequestsError())
 		return
 	}
 
-	if validationErr := helpers.ValidateEmailAddress(retrieveStudentRecipientsRequest.TeacherEmail); validationErr != nil {
+	if validationErr := helpers.ValidateEmailFormat(retrieveStudentRecipientsRequest.TeacherEmail); validationErr != nil {
 		generateBadRequestErrorResponse(context, validationErr)
 		return
 	}
 
 	mentionedStudents := helpers.FindValidEmailsInText(retrieveStudentRecipientsRequest.NotificationMessage)
-	recipientEmails, dbErr := models.RetrieveStudentRecipients(retrieveStudentRecipientsRequest.TeacherEmail, mentionedStudents)
+	recipientEmails, dbErr := models.RetrieveStudentRecipients(retrieveStudentRecipientsRequest.TeacherEmail, mentionedStudents, teacherRepository.connection)
 	if dbErr != nil {
 		generateInternalServerErrorResponse(context, dbErr)
 		return
@@ -105,6 +109,14 @@ func (teacherRepository *TeacherRepository) RetrieveStudentRecipients(context *g
 	context.JSON(http.StatusOK, &types.RetrieveCommonStudentsResponse{
 		StudentEmails: recipientEmails,
 	})
+}
+
+func (teacherRepository *TeacherRepository) ClearDatabase(context *gin.Context) {
+	if err := models.ClearDatabase(teacherRepository.connection); err != nil {
+		generateInternalServerErrorResponse(context, err)
+		return
+	}
+	context.JSON(http.StatusNoContent, nil)
 }
 
 func generateBadRequestErrorResponse(context *gin.Context, err error) {

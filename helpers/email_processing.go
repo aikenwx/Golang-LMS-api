@@ -6,12 +6,12 @@ import (
 	"regexp"
 )
 
-// ValidateEmailAddress custom email validation handler
-func ValidateEmailAddress(email string) error {
+// ValidateEmailFormat custom email validation handler
+func ValidateEmailFormat(email string) error {
 	_, err := mail.ParseAddress(email)
 
 	if err != nil {
-		return fmt.Errorf(`the email address "%s" is invalid`, email)
+		return fmt.Errorf(`The email address %s has an invalid format`, email)
 	}
 
 	return nil
@@ -19,7 +19,7 @@ func ValidateEmailAddress(email string) error {
 
 func ValidateEmailAddresses(emails []string) error {
 	for _, email := range emails {
-		err := ValidateEmailAddress(email)
+		err := ValidateEmailFormat(email)
 		if err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ func FindValidEmailsInText(text string) []string {
 
 	// return only valid emails
 	emails = Filter(emails, func(email string) bool {
-		return ValidateEmailAddress(email) == nil
+		return ValidateEmailFormat(email) == nil
 	})
 
 	return emails

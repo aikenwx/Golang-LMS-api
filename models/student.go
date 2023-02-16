@@ -32,3 +32,7 @@ func updateOrCreateStudent(email string, isSuspended bool, db *gorm.DB) (err err
 
 	return err
 }
+
+func deleteAllStudents (db *gorm.DB) error {
+	return db.Exec("DELETE FROM students").Error
+}

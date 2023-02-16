@@ -20,3 +20,6 @@ func createTeacherIfNotExist(email string, db *gorm.DB) (err error) {
 	return err
 }
 
+func deleteAllTeachers(db *gorm.DB) error {
+	return db.Exec("DELETE FROM teachers").Error
+}
