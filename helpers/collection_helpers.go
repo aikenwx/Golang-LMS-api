@@ -19,8 +19,12 @@ func Filter[T any](slice []T, function func(T) bool) []T {
 }
 
 func RemoveDuplicatesInStringSlice(slice []string) []string {
+
+	// create a map of strings
 	keys := make(map[string]bool)
 	result := []string{}
+
+	// add all strings to map if not already in map
 	for _, entry := range slice {
 		if _, value := keys[entry]; !value {
 			keys[entry] = true
@@ -39,7 +43,7 @@ func RemoveAllStringsInSlice(slice []string, stringsToRemove []string) []string 
 		stringsToRemoveMap[str] = true
 	}
 
-	// remove all strings from slice
+	// add all that are not in the map
 	for _, str := range slice {
 		if _, ok := stringsToRemoveMap[str]; !ok {
 			result = append(result, str)

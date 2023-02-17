@@ -177,3 +177,26 @@ func TestRemoveDuplicatesInStringSlice2(t *testing.T) {
 		t.Errorf("wrong result")
 	}
 }
+
+func TestRemoveAllStringsInSlice1(t *testing.T) {
+	slice := []string{"a", "b", "c", "a", "b", "c"}
+
+	result := RemoveAllStringsInSlice(slice, []string{"a", "b"})
+
+	if len(result) != 2 {
+		t.Errorf("wrong result length")
+	}
+	if result[0] != "c" || result[1] != "c" {
+		t.Errorf("wrong result")
+	}
+}
+
+func TestRemoveAllStringsInSlice2(t *testing.T) {
+	slice := []string{"a", "b", "c", "a", "b", "c"}
+
+	result := RemoveAllStringsInSlice(slice, []string{"a", "b", "c"})
+
+	if len(result) != 0 {
+		t.Errorf("wrong result length")
+	}
+}
