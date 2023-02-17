@@ -5,9 +5,38 @@ import (
 	"learning-management-system/controllers"
 	"learning-management-system/database"
 	"learning-management-system/models"
+	"log"
+	"os/exec"
+	"strconv"
 )
 
 func main() {
+
+	cmd := exec.Command("id", "-u")
+	output, err := cmd.Output()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// output has trailing \n
+	// need to remove the \n
+	// otherwise it will cause error for strconv.Atoi
+	// log.Println(output[:len(output)-1])
+
+	// 0 = root, 501 = non-root user
+	i, err := strconv.Atoi(string(output[:len(output)-1]))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if i == 0 {
+		log.Println("Awesome! You are now running this program with root permissions!")
+	} else {
+		log.Fatal("This program must be run as root! (sudo)")
+	}
+
 	connection := setupDb()
 	router := setupRouter(connection)
 	_ = router.Run(":8080")

@@ -14,7 +14,7 @@ import (
 const TEST_USERNAME string = "root"
 const TEST_PASSWORD string = ""
 const TEST_HOST string = "localhost"
-const TEST_NAME string = "test_lms_db"
+const TEST_NAME string = "dev_lms_db"
 const TEST_PORT string = "3306"
 const TEST_DEBUG bool = false
 
