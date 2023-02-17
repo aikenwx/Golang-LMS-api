@@ -14,13 +14,6 @@ type TeacherManager struct {
 	email string
 }
 
-func createTeacherIfNotExist(email string, db *gorm.DB) (err error) {
-	teacher := &Teacher{Email: email}
-	err = db.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(teacher).Error
-
-	return err
-}
-
 func createTeachersIfNotExist(emails []string, db *gorm.DB) (err error) {
 
 	teachers := helpers.Map(emails, func(email string) *Teacher {
@@ -32,4 +25,36 @@ func createTeachersIfNotExist(emails []string, db *gorm.DB) (err error) {
 
 func deleteAllTeachers(db *gorm.DB) error {
 	return db.Exec("DELETE FROM teachers").Error
+}
+
+func getAllTeachersExistingInList(teacherEmails []string, db *gorm.DB) ([]string, error) {
+	var existingTeachers []Teacher
+
+	err := db.Select("teachers.email").Where("teachers.email in ?", teacherEmails).Find(&existingTeachers).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	existingTeacherEmails := helpers.Map(existingTeachers, func(teacher Teacher) string {
+		return teacher.Email
+	})
+
+	return existingTeacherEmails, nil
+}
+
+func verifyTeacherExist(email string, db *gorm.DB) (bool, error) {
+	var existingTeacher Teacher
+
+	err := db.Select("teachers.email").Where("teachers.email = ?", email).Find(&existingTeacher).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	if existingTeacher.Email == "" {
+		return false, nil
+	}
+
+	return true, nil
 }

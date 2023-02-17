@@ -17,3 +17,11 @@ type RetrieveStudentRecipientsRequest struct {
 	TeacherEmail        string `json:"teacher" binding:"required"`
 	NotificationMessage string `json:"notification" binding:"required"`
 }
+
+type PopulateStudentsRequest struct {
+	StudentEmails []string `json:"students" binding:"required"`
+}
+
+type PopulateTeachersRequest struct {
+	TeacherEmails []string `json:"teachers" binding:"required"`
+}

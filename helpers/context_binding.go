@@ -10,32 +10,14 @@ import (
 )
 
 func BindRegisterStudentsToTeacherRequest(context *gin.Context, registerStudentsToTeacherRequest *types.RegisterStudentsToTeacherRequest) error {
-
-	if contentTypeErr := validateContentTypeIsApplicationJson(context); contentTypeErr != nil {
-		return contentTypeErr
-	}
-
-	if ginErr := context.ShouldBindJSON(registerStudentsToTeacherRequest); ginErr != nil {
-		return validateGinBindings(registerStudentsToTeacherRequest, "json", ginErr)
-	}
-
-	return nil
+	return bindJsonBodyRequests(context, registerStudentsToTeacherRequest)
 }
 
 func BindSuspendStudentRequest(context *gin.Context, studentSuspensionRequest *types.StudentSuspensionRequest) error {
-
-	if contentTypeErr := validateContentTypeIsApplicationJson(context); contentTypeErr != nil {
-		return contentTypeErr
-	}
-
-	if ginErr := context.ShouldBindJSON(studentSuspensionRequest); ginErr != nil {
-		return validateGinBindings(studentSuspensionRequest, "json", ginErr)
-	}
-
-	return nil
+	return bindJsonBodyRequests(context, studentSuspensionRequest)
 }
 
-func BindRetrieveCommonStudents(context *gin.Context, retrieveCommonStudentsRequest *types.RetrieveCommonStudentsRequest) error {
+func BindRetrieveCommonStudentsRequest(context *gin.Context, retrieveCommonStudentsRequest *types.RetrieveCommonStudentsRequest) error {
 
 	if ginErr := context.ShouldBindQuery(retrieveCommonStudentsRequest); ginErr != nil {
 		return validateGinBindings(retrieveCommonStudentsRequest, "form", ginErr)
@@ -44,17 +26,16 @@ func BindRetrieveCommonStudents(context *gin.Context, retrieveCommonStudentsRequ
 	return nil
 }
 
-func BindRetrieveStudentRecipients(context *gin.Context, retrieveStudentRecipientsRequest *types.RetrieveStudentRecipientsRequest) error {
+func BindRetrieveStudentRecipientsRequest(context *gin.Context, retrieveStudentRecipientsRequest *types.RetrieveStudentRecipientsRequest) error {
+	return bindJsonBodyRequests(context, retrieveStudentRecipientsRequest)
+}
 
-	if contentTypeErr := validateContentTypeIsApplicationJson(context); contentTypeErr != nil {
-		return contentTypeErr
-	}
+func BindPopulateStudentsRequest(context *gin.Context, populateStudentsRequest *types.PopulateStudentsRequest) error {
+	return bindJsonBodyRequests(context, populateStudentsRequest)
+}
 
-	if ginErr := context.ShouldBindJSON(retrieveStudentRecipientsRequest); ginErr != nil {
-		return validateGinBindings(retrieveStudentRecipientsRequest, "json", ginErr)
-	}
-
-	return nil
+func BindPopulateTeachersRequest(context *gin.Context, populateTeachersRequest *types.PopulateTeachersRequest) error {
+	return bindJsonBodyRequests(context, populateTeachersRequest)
 }
 
 func validateContentTypeIsApplicationJson(context *gin.Context) error {
@@ -108,4 +89,17 @@ func parseFieldError[T any](fieldError validator.FieldError, requestStruct *T, b
 
 func parseMarshallingError(e json.UnmarshalTypeError) string {
 	return fmt.Sprintf("The field %s must be a %s", e.Field, e.Type.String())
+}
+
+func bindJsonBodyRequests[T any](context *gin.Context, requestStruct *T) error {
+
+	if contentTypeErr := validateContentTypeIsApplicationJson(context); contentTypeErr != nil {
+		return contentTypeErr
+	}
+
+	if ginErr := context.ShouldBindJSON(requestStruct); ginErr != nil {
+		return validateGinBindings(requestStruct, "json", ginErr)
+	}
+
+	return nil
 }

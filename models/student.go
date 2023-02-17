@@ -20,19 +20,47 @@ func createStudentsIfNotExist(studentEmails []string, db *gorm.DB) (err error) {
 	return err
 }
 
-func updateOrCreateStudent(email string, isSuspended bool, db *gorm.DB) (err error) {
+func updateStudent(email string, isSuspended bool, db *gorm.DB) (err error) {
 	student := &Student{Email: email, IsSuspended: isSuspended}
 
 	updateQuery := db.Model(student).Where("email = ?", email).Updates(student)
 	err = updateQuery.Error
 
-	if updateQuery.RowsAffected == 0 {
-		err = db.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(student).Error
-	}
-
 	return err
 }
 
-func deleteAllStudents (db *gorm.DB) error {
+func deleteAllStudents(db *gorm.DB) error {
 	return db.Exec("DELETE FROM students").Error
+}
+
+func getAllStudentsExistingInList(studentEmails []string, db *gorm.DB) (existingStudentEmails []string, err error) {
+	var existingStudents []Student
+
+	err = db.Select("students.email").Where("students.email in ?", studentEmails).Find(&existingStudents).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	existingStudentEmails = helpers.Map(existingStudents, func(student Student) string {
+		return student.Email
+	})
+
+	return existingStudentEmails, nil
+}
+
+func verifyStudentExist(studentEmail string, db *gorm.DB) (studentExists bool, err error) {
+	var existingStudent Student
+
+	err = db.Select("students.email").Where("students.email = ?", studentEmail).Find(&existingStudent).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	if existingStudent.Email == "" {
+		return false, nil
+	}
+
+	return true, nil
 }

@@ -29,3 +29,22 @@ func RemoveDuplicatesInStringSlice(slice []string) []string {
 	}
 	return result
 }
+
+func RemoveAllStringsInSlice(slice []string, stringsToRemove []string) []string {
+	result := []string{}
+
+	// create a map of strings to remove
+	stringsToRemoveMap := make(map[string]bool)
+	for _, str := range stringsToRemove {
+		stringsToRemoveMap[str] = true
+	}
+
+	// remove all strings from slice
+	for _, str := range slice {
+		if _, ok := stringsToRemoveMap[str]; !ok {
+			result = append(result, str)
+		}
+	}
+	
+	return result
+}

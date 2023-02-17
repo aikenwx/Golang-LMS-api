@@ -16,13 +16,15 @@ func main() {
 func setupRouter(connection *database.Connection) *gin.Engine {
 
 	router := gin.Default()
-	userRepo := controllers.NewTeacherRepo(connection)
+	repository := controllers.NewRepository(connection)
 
-	router.POST("/api/register", userRepo.RegisterStudentsToTeacher)
-	router.GET("/api/commonstudents", userRepo.RetrieveCommonStudents)
-	router.POST("/api/suspend", userRepo.SuspendStudent)
-	router.POST("/api/retrievefornotifications", userRepo.RetrieveStudentRecipients)
-	router.DELETE("/api/clear", userRepo.ClearDatabase)
+	router.POST("/api/register", repository.RegisterStudentsToTeacher)
+	router.GET("/api/commonstudents", repository.RetrieveCommonStudents)
+	router.POST("/api/suspend", repository.SuspendStudent)
+	router.POST("/api/retrievefornotifications", repository.RetrieveStudentRecipients)
+	router.DELETE("/api/clear", repository.ClearDatabase)
+	router.POST("/api/populateteachers", repository.PopulateTeachers)
+	router.POST("/api/populatestudents", repository.PopulateStudents)
 
 	return router
 }
