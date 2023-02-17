@@ -17,3 +17,15 @@ func Filter[T any](slice []T, function func(T) bool) []T {
 	}
 	return result
 }
+
+func RemoveDuplicatesInStringSlice(slice []string) []string {
+	keys := make(map[string]bool)
+	result := []string{}
+	for _, entry := range slice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			result = append(result, entry)
+		}
+	}
+	return result
+}

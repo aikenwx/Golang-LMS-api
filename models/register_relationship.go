@@ -23,11 +23,11 @@ func createRegisterRelationshipsIfNotExists(teacherEmail string, studentEmails [
 	return err
 }
 
-func getAllStudentsRegisteredToTeacherEmails(teacherEmail string, db *gorm.DB) (studentEmails []string, err error) {
+func getAllStudentsRegisteredToTeacherEmails(teacherEmails []string, db *gorm.DB) (studentEmails []string, err error) {
 	var students []*Student
 
 	query := db.Table("students").Select("students.email").Joins("left join register_relationships on students.email = register_relationships.student_email").
-		Where(" register_relationships.teacher_email = ?", teacherEmail).Find(&students)
+		Where(" register_relationships.teacher_email in ?", teacherEmails).Group("students.email").Having("COUNT(students.email) = ?", len(teacherEmails)).Find(&students)
 	err = query.Error
 
 	studentEmails = helpers.Map(students, func(student *Student) string {

@@ -5,12 +5,12 @@ type RegisterStudentsToTeacherRequest struct {
 	StudentEmails []string `json:"students" binding:"required"`
 }
 
-type StudentSuspensionReceiveRequest struct {
+type StudentSuspensionRequest struct {
 	StudentEmail string `json:"student" binding:"required"`
 }
 
 type RetrieveCommonStudentsRequest struct {
-	TeacherEmail string `form:"teacher" binding:"required"`
+	TeacherEmails []string `form:"teacher" binding:"required"`
 }
 
 type RetrieveStudentRecipientsRequest struct {

@@ -24,10 +24,10 @@ func SuspendStudent(studentEmail string, connection *database.Connection) error 
 	return updateOrCreateStudent(studentEmail, true, db)
 }
 
-func RetrieveCommonStudents(teacherEmail string, connection *database.Connection) ([]string, error) {
+func RetrieveCommonStudents(teacherEmail []string, connection *database.Connection) ([]string, error) {
 	db := connection.GetDb()
 	tx := db.Begin()
-	if err := createTeacherIfNotExist(teacherEmail, tx); err != nil {
+	if err := createTeachersIfNotExist(teacherEmail, tx); err != nil {
 		tx.Rollback()
 	}
 	studentEmails, err := getAllStudentsRegisteredToTeacherEmails(teacherEmail, tx)

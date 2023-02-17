@@ -146,3 +146,34 @@ func TestValidateEmailFormat2(t *testing.T) {
 		t.Errorf("email should be valid")
 	}
 }
+
+
+func TestRemoveDuplicatesInStringSlice1(t *testing.T) {
+	slice := []string{"a", "b", "c", "a", "b", "c"}
+
+	result := RemoveDuplicatesInStringSlice(slice)
+
+	if len(result) != 3 {
+		t.Errorf("wrong result length")
+	}
+	
+	expected := []string{"a", "b", "c"}
+	for i := 0; i < len(result); i++ {
+		if result[i] != expected[i] {
+			t.Errorf("wrong result")
+		}
+	}
+}
+
+func TestRemoveDuplicatesInStringSlice2(t *testing.T) {
+	slice := []string{"a", "a"}
+
+	result := RemoveDuplicatesInStringSlice(slice)
+
+	if len(result) != 1 {
+		t.Errorf("wrong result length")
+	}
+	if result[0] != "a" {
+		t.Errorf("wrong result")
+	}
+}
