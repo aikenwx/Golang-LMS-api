@@ -9,7 +9,7 @@ import (
 
 const DB_USERNAME = "root"
 const DB_PASSWORD = ""
-const DB_NAME = "my_db"
+const DB_NAME = "production_lms_db"
 const DB_HOST = "localhost"
 const DB_PORT = "3306"
 
