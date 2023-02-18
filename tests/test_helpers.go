@@ -8,7 +8,7 @@ import (
 	"learning-management-system/controllers"
 	"learning-management-system/database"
 	"learning-management-system/models"
-	"learning-management-system/transactions"
+	"learning-management-system/transaction_managers"
 	"net/http"
 	"reflect"
 	"testing"
@@ -38,7 +38,7 @@ func SetUpTestDb() (*database.Connection, *controllers.Controller) {
 	router := gin.Default()
 	controller := controllers.NewController(connection)
 
-	transactionManager := transactions.NewTransactionManager()
+	transactionManager := transaction_managers.NewTransactionManager()
 	transactionManager.ClearDatabase(connection)
 
 	router.POST("/api/register", controller.RegisterStudentsToTeacher)

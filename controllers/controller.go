@@ -4,20 +4,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"learning-management-system/database"
 	"learning-management-system/helpers"
-	"learning-management-system/transactions"
+	"learning-management-system/transaction_managers"
 	"learning-management-system/types"
 	"net/http"
 )
 
 type Controller struct {
 	connection         *database.Connection
-	transactionManager *transactions.TransactionManager
+	transactionManager *transaction_managers.TransactionManager
 }
 
 func NewController(connection *database.Connection) *Controller {
 	return &Controller{
 		connection:         connection,
-		transactionManager: transactions.NewTransactionManager(),
+		transactionManager: transaction_managers.NewTransactionManager(),
 	}
 }
 
