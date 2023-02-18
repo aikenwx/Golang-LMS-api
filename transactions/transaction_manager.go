@@ -1,4 +1,4 @@
-package controllers
+package transactions
 
 import (
 	"fmt"
@@ -9,31 +9,35 @@ import (
 	"strings"
 )
 
-var teacherRepo *repositories.TeacherRepo
-var studentRepo *repositories.StudentRepo
-var registerRelationshipRepo *repositories.RegisterRelationshipRepo
-
-func InitRepositories() {
-	teacherRepo = repositories.NewTeacherRepo()
-	studentRepo = repositories.NewStudentRepo()
-	registerRelationshipRepo = repositories.NewRegisterRelationshipRepo()
+type TransactionManager struct {
+	studentRepo              *repositories.StudentRepo
+	teacherRepo              *repositories.TeacherRepo
+	registerRelationshipRepo *repositories.RegisterRelationshipRepo
 }
 
-func RegisterStudentsToTeacher(teacherEmail string, studentEmails []string, connection *database.Connection) error {
+func NewTransactionManager() *TransactionManager {
+	return &TransactionManager{
+		studentRepo:              repositories.NewStudentRepo(),
+		teacherRepo:              repositories.NewTeacherRepo(),
+		registerRelationshipRepo: repositories.NewRegisterRelationshipRepo(),
+	}
+}
+
+func (transactionManager *TransactionManager) RegisterStudentsToTeacher(teacherEmail string, studentEmails []string, connection *database.Connection) error {
 	db := connection.GetDb()
-	return registerRelationshipRepo.CreateOneTeacherToManyStudentsRegisterRelationshipsIfNotExists(teacherEmail, studentEmails, db)
+	return transactionManager.registerRelationshipRepo.CreateOneTeacherToManyStudentsRegisterRelationshipsIfNotExists(teacherEmail, studentEmails, db)
 }
 
-func SuspendStudent(studentEmail string, connection *database.Connection) error {
+func (transactionManager *TransactionManager) SuspendStudent(studentEmail string, connection *database.Connection) error {
 	db := connection.GetDb()
 	studentToUpdate := models.Student{Email: studentEmail, IsSuspended: true}
-	return studentRepo.UpdateStudent(&studentToUpdate, db)
+	return transactionManager.studentRepo.UpdateStudent(&studentToUpdate, db)
 }
 
-func RetrieveCommonStudentEmails(teacherEmails []string, connection *database.Connection) ([]string, error) {
+func (transactionManager *TransactionManager) RetrieveCommonStudentEmails(teacherEmails []string, connection *database.Connection) ([]string, error) {
 	db := connection.GetDb()
 
-	relationships, err := registerRelationshipRepo.GetRelationshipsByTeacherEmails(teacherEmails, db)
+	relationships, err := transactionManager.registerRelationshipRepo.GetRelationshipsByTeacherEmails(teacherEmails, db)
 
 	if err != nil {
 		return nil, err
@@ -56,10 +60,10 @@ func RetrieveCommonStudentEmails(teacherEmails []string, connection *database.Co
 	return commonStudents, nil
 }
 
-func RetrieveStudentRecipients(teacherEmail string, mentionedStudentEmails []string, connection *database.Connection) ([]string, error) {
+func (transactionManager *TransactionManager) RetrieveStudentRecipients(teacherEmail string, mentionedStudentEmails []string, connection *database.Connection) ([]string, error) {
 	db := connection.GetDb()
 
-	relationships, err := registerRelationshipRepo.GetRelationshipsByTeacherEmail(teacherEmail, db)
+	relationships, err := transactionManager.registerRelationshipRepo.GetRelationshipsByTeacherEmail(teacherEmail, db)
 
 	if err != nil {
 		return nil, err
@@ -74,7 +78,7 @@ func RetrieveStudentRecipients(teacherEmail string, mentionedStudentEmails []str
 	}
 
 	// get mentioned students
-	mentionedStudents, err := studentRepo.GetStudentsByEmails(mentionedStudentEmails, db)
+	mentionedStudents, err := transactionManager.studentRepo.GetStudentsByEmails(mentionedStudentEmails, db)
 
 	// append mentioned students to students
 	students = append(students, mentionedStudents...)
@@ -95,34 +99,34 @@ func RetrieveStudentRecipients(teacherEmail string, mentionedStudentEmails []str
 	return studentEmails, nil
 }
 
-func ClearDatabase(connection *database.Connection) error {
+func (transactionManager *TransactionManager) ClearDatabase(connection *database.Connection) error {
 	db := connection.GetDb()
 	tx := db.Begin()
-	if err := registerRelationshipRepo.DeleteAllRegisterRelationships(tx); err != nil {
+	if err := transactionManager.registerRelationshipRepo.DeleteAllRegisterRelationships(tx); err != nil {
 		tx.Rollback()
 	}
-	if err := studentRepo.DeleteAllStudents(tx); err != nil {
+	if err := transactionManager.studentRepo.DeleteAllStudents(tx); err != nil {
 		tx.Rollback()
 	}
-	if err := teacherRepo.DeleteAllTeachers(tx); err != nil {
+	if err := transactionManager.teacherRepo.DeleteAllTeachers(tx); err != nil {
 		tx.Rollback()
 	}
 	return tx.Commit().Error
 }
 
-func PopulateStudents(studentEmails []string, connection *database.Connection) error {
+func (transactionManager *TransactionManager) PopulateStudents(studentEmails []string, connection *database.Connection) error {
 	db := connection.GetDb()
-	err := studentRepo.CreateStudentsIfNotExist(studentEmails, db)
+	err := transactionManager.studentRepo.CreateStudentsIfNotExist(studentEmails, db)
 	return err
 }
 
-func PopulateTeachers(teacherEmails []string, connection *database.Connection) error {
+func (transactionManager *TransactionManager) PopulateTeachers(teacherEmails []string, connection *database.Connection) error {
 	db := connection.GetDb()
-	err := teacherRepo.CreateTeachersIfNotExist(teacherEmails, db)
+	err := transactionManager.teacherRepo.CreateTeachersIfNotExist(teacherEmails, db)
 	return err
 }
 
-func ValidateStudentsExists(studentEmails []string, connection *database.Connection) (userError error, dbError error) {
+func (transactionManager *TransactionManager) ValidateStudentsExists(studentEmails []string, connection *database.Connection) (userError error, dbError error) {
 	db := connection.GetDb()
 
 	if len(studentEmails) == 0 {
@@ -130,14 +134,14 @@ func ValidateStudentsExists(studentEmails []string, connection *database.Connect
 	}
 
 	if len(studentEmails) == 1 {
-		if student, dbError := studentRepo.GetStudentByEmail(studentEmails[0], db); dbError != nil {
+		if student, dbError := transactionManager.studentRepo.GetStudentByEmail(studentEmails[0], db); dbError != nil {
 			return nil, dbError
 		} else if student == nil {
 			return generateNonExistentStudentsError(studentEmails), nil
 		}
 	}
 
-	existingStudents, err := studentRepo.GetStudentsByEmails(studentEmails, db)
+	existingStudents, err := transactionManager.studentRepo.GetStudentsByEmails(studentEmails, db)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +156,7 @@ func ValidateStudentsExists(studentEmails []string, connection *database.Connect
 	return generateNonExistentStudentsError(nonExistentStudentEmails), nil
 }
 
-func ValidateTeachersExists(teacherEmails []string, connection *database.Connection) (userError error, dbError error) {
+func (transactionManager *TransactionManager) ValidateTeachersExists(teacherEmails []string, connection *database.Connection) (userError error, dbError error) {
 	db := connection.GetDb()
 
 	if len(teacherEmails) == 0 {
@@ -160,14 +164,14 @@ func ValidateTeachersExists(teacherEmails []string, connection *database.Connect
 	}
 
 	if len(teacherEmails) == 1 {
-		if teacher, dbError := teacherRepo.GetTeacherByEmail(teacherEmails[0], db); dbError != nil {
+		if teacher, dbError := transactionManager.teacherRepo.GetTeacherByEmail(teacherEmails[0], db); dbError != nil {
 			return nil, dbError
 		} else if teacher == nil {
 			return generateNonExistentTeachersError(teacherEmails), nil
 		}
 	}
 
-	existingTeachers, err := teacherRepo.GetTeachersByEmails(teacherEmails, db)
+	existingTeachers, err := transactionManager.teacherRepo.GetTeachersByEmails(teacherEmails, db)
 	if err != nil {
 		return nil, err
 	}

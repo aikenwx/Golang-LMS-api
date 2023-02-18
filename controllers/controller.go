@@ -4,17 +4,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"learning-management-system/database"
 	"learning-management-system/helpers"
+	"learning-management-system/transactions"
 	"learning-management-system/types"
 	"net/http"
 )
 
 type Controller struct {
-	connection *database.Connection
+	connection         *database.Connection
+	transactionManager *transactions.TransactionManager
 }
 
 func NewController(connection *database.Connection) *Controller {
-	InitRepositories()
-	return &Controller{connection: connection}
+	return &Controller{
+		connection:         connection,
+		transactionManager: transactions.NewTransactionManager(),
+	}
 }
 
 func (controller *Controller) RegisterStudentsToTeacher(context *gin.Context) {
@@ -31,7 +35,7 @@ func (controller *Controller) RegisterStudentsToTeacher(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := ValidateTeachersExists([]string{registerStudentsToTeacherRequest.TeacherEmail}, controller.connection); dbError != nil {
+	if userError, dbError := controller.transactionManager.ValidateTeachersExists([]string{registerStudentsToTeacherRequest.TeacherEmail}, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -39,7 +43,7 @@ func (controller *Controller) RegisterStudentsToTeacher(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := ValidateStudentsExists(registerStudentsToTeacherRequest.StudentEmails, controller.connection); dbError != nil {
+	if userError, dbError := controller.transactionManager.ValidateStudentsExists(registerStudentsToTeacherRequest.StudentEmails, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -47,7 +51,7 @@ func (controller *Controller) RegisterStudentsToTeacher(context *gin.Context) {
 		return
 	}
 
-	if err := RegisterStudentsToTeacher(registerStudentsToTeacherRequest.TeacherEmail, registerStudentsToTeacherRequest.StudentEmails, controller.connection); err != nil {
+	if err := controller.transactionManager.RegisterStudentsToTeacher(registerStudentsToTeacherRequest.TeacherEmail, registerStudentsToTeacherRequest.StudentEmails, controller.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}
@@ -68,7 +72,7 @@ func (controller *Controller) SuspendStudent(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := ValidateStudentsExists([]string{studentSuspension.StudentEmail}, controller.connection); dbError != nil {
+	if userError, dbError := controller.transactionManager.ValidateStudentsExists([]string{studentSuspension.StudentEmail}, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -76,7 +80,7 @@ func (controller *Controller) SuspendStudent(context *gin.Context) {
 		return
 	}
 
-	if dbError := SuspendStudent(studentSuspension.StudentEmail, controller.connection); dbError != nil {
+	if dbError := controller.transactionManager.SuspendStudent(studentSuspension.StudentEmail, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	}
@@ -99,7 +103,7 @@ func (controller *Controller) RetrieveCommonStudents(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := ValidateTeachersExists(nonDuplicateTeacherEmails, controller.connection); dbError != nil {
+	if userError, dbError := controller.transactionManager.ValidateTeachersExists(nonDuplicateTeacherEmails, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -107,7 +111,7 @@ func (controller *Controller) RetrieveCommonStudents(context *gin.Context) {
 		return
 	}
 
-	studentEmails, dbErr := RetrieveCommonStudentEmails(nonDuplicateTeacherEmails, controller.connection)
+	studentEmails, dbErr := controller.transactionManager.RetrieveCommonStudentEmails(nonDuplicateTeacherEmails, controller.connection)
 	if dbErr != nil {
 		generateInternalServerErrorResponse(context, dbErr)
 		return
@@ -131,7 +135,7 @@ func (controller *Controller) RetrieveStudentRecipients(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := ValidateTeachersExists([]string{retrieveStudentRecipientsRequest.TeacherEmail}, controller.connection); dbError != nil {
+	if userError, dbError := controller.transactionManager.ValidateTeachersExists([]string{retrieveStudentRecipientsRequest.TeacherEmail}, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -141,7 +145,7 @@ func (controller *Controller) RetrieveStudentRecipients(context *gin.Context) {
 
 	mentionedStudents := helpers.RemoveDuplicatesInStringSlice(helpers.FindValidEmailsInText(retrieveStudentRecipientsRequest.NotificationMessage))
 
-	if userError, dbError := ValidateStudentsExists(mentionedStudents, controller.connection); dbError != nil {
+	if userError, dbError := controller.transactionManager.ValidateStudentsExists(mentionedStudents, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -149,7 +153,7 @@ func (controller *Controller) RetrieveStudentRecipients(context *gin.Context) {
 		return
 	}
 
-	recipientEmails, dbErr := RetrieveStudentRecipients(retrieveStudentRecipientsRequest.TeacherEmail, mentionedStudents, controller.connection)
+	recipientEmails, dbErr := controller.transactionManager.RetrieveStudentRecipients(retrieveStudentRecipientsRequest.TeacherEmail, mentionedStudents, controller.connection)
 	if dbErr != nil {
 		generateInternalServerErrorResponse(context, dbErr)
 		return
@@ -161,7 +165,7 @@ func (controller *Controller) RetrieveStudentRecipients(context *gin.Context) {
 }
 
 func (controller *Controller) ClearDatabase(context *gin.Context) {
-	if err := ClearDatabase(controller.connection); err != nil {
+	if err := controller.transactionManager.ClearDatabase(controller.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}
@@ -182,7 +186,7 @@ func (controller *Controller) PopulateStudents(context *gin.Context) {
 		return
 	}
 
-	if err := PopulateStudents(populateStudentsRequest.StudentEmails, controller.connection); err != nil {
+	if err := controller.transactionManager.PopulateStudents(populateStudentsRequest.StudentEmails, controller.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}
@@ -203,7 +207,7 @@ func (controller *Controller) PopulateTeachers(context *gin.Context) {
 		return
 	}
 
-	if err := PopulateTeachers(populateTeachersRequest.TeacherEmails, controller.connection); err != nil {
+	if err := controller.transactionManager.PopulateTeachers(populateTeachersRequest.TeacherEmails, controller.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}
