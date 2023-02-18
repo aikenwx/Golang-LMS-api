@@ -36,10 +36,10 @@ func TestMapFunction2(t *testing.T) {
 		t.Errorf("wrong result length")
 	}
 
-	expected := []testStructStub{testStructStub{
-		name: "abdfg", age: 98},
-		testStructStub{name: "adfbg", age: 98},
-		testStructStub{name: "dfdfcg", age: 101}}
+	expected := []testStructStub{
+		{name: "abdfg", age: 98},
+		{name: "adfbg", age: 98},
+		{name: "dfdfcg", age: 101}}
 
 	for i := 0; i < len(result); i++ {
 		if result[i].name != expected[i].name || result[i].age != expected[i].age {
@@ -147,7 +147,6 @@ func TestValidateEmailFormat2(t *testing.T) {
 	}
 }
 
-
 func TestRemoveDuplicatesInStringSlice1(t *testing.T) {
 	slice := []string{"a", "b", "c", "a", "b", "c"}
 
@@ -156,7 +155,7 @@ func TestRemoveDuplicatesInStringSlice1(t *testing.T) {
 	if len(result) != 3 {
 		t.Errorf("wrong result length")
 	}
-	
+
 	expected := []string{"a", "b", "c"}
 	for i := 0; i < len(result); i++ {
 		if result[i] != expected[i] {

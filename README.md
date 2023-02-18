@@ -89,7 +89,37 @@ students and teachers as well as an API to clear all tables in the database
    ```json
    {"students": ["student2@gmail.com","student3@gmail.com, "]}
    ```
+## Error Messages:
+Invalid requests will result in a code 400 response and can be attributed to 5 types of errors:
+1. Field not provided error. Occurs when a required field for the request is not provided
+   ```json
+   {"message":"The required field students is not supplied"}
+   ```
+
+2. Wrong field type error. Occurs when the wrong JSON type is provided for a required field
+   ```json
+   {"message":"The field students must be a []string"}
+   ```
+3. Does/do not exist error. Occurs when the entry to a provided field does not exist in the database:
    
+   example 1:
+   ```json
+    {"message":"Teacher with email aiken@gmail.com does not exist in the database"}
+   ```
+   example 2:
+   ```json
+   {"message":"Students with emails test1@gmail.com, test2@gmail.com do not exist in the database"}
+   ```
+4. Invalid email address. Occurs when a provided email address is invalid:
+   e.g.
+   ```json
+   {"message":"The email address aikenatgmail.com has an invalid format"}
+   ``` 
+5. Invalid content type header. Occurs when provided header for content type is not application/json for POST requests
+   ```json
+   "message":"Content-Type header must be application/json"}
+   ```
+
 ## Design Patterns:
 
 I have tried to adhere to good principles of software design by following the below patterns
