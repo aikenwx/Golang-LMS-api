@@ -4,20 +4,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"learning-management-system/database"
 	"learning-management-system/helpers"
-	"learning-management-system/models"
 	"learning-management-system/types"
 	"net/http"
 )
 
-type Repository struct {
+type Controller struct {
 	connection *database.Connection
 }
 
-func NewRepository(connection *database.Connection) *Repository {
-	return &Repository{connection: connection}
+func NewController(connection *database.Connection) *Controller {
+	InitRepositories()
+	return &Controller{connection: connection}
 }
 
-func (repository *Repository) RegisterStudentsToTeacher(context *gin.Context) {
+func (controller *Controller) RegisterStudentsToTeacher(context *gin.Context) {
 
 	registerStudentsToTeacherRequest := &types.RegisterStudentsToTeacherRequest{}
 
@@ -31,7 +31,7 @@ func (repository *Repository) RegisterStudentsToTeacher(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := models.ValidateTeachersExists([]string{registerStudentsToTeacherRequest.TeacherEmail}, repository.connection); dbError != nil {
+	if userError, dbError := ValidateTeachersExists([]string{registerStudentsToTeacherRequest.TeacherEmail}, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -39,7 +39,7 @@ func (repository *Repository) RegisterStudentsToTeacher(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := models.ValidateStudentsExists(registerStudentsToTeacherRequest.StudentEmails, repository.connection); dbError != nil {
+	if userError, dbError := ValidateStudentsExists(registerStudentsToTeacherRequest.StudentEmails, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -47,7 +47,7 @@ func (repository *Repository) RegisterStudentsToTeacher(context *gin.Context) {
 		return
 	}
 
-	if err := models.RegisterStudentsToTeacher(registerStudentsToTeacherRequest.TeacherEmail, registerStudentsToTeacherRequest.StudentEmails, repository.connection); err != nil {
+	if err := RegisterStudentsToTeacher(registerStudentsToTeacherRequest.TeacherEmail, registerStudentsToTeacherRequest.StudentEmails, controller.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}
@@ -55,7 +55,7 @@ func (repository *Repository) RegisterStudentsToTeacher(context *gin.Context) {
 	context.JSON(http.StatusNoContent, nil)
 }
 
-func (repository *Repository) SuspendStudent(context *gin.Context) {
+func (controller *Controller) SuspendStudent(context *gin.Context) {
 	studentSuspension := &types.StudentSuspensionRequest{}
 
 	if contextErr := helpers.BindSuspendStudentRequest(context, studentSuspension); contextErr != nil {
@@ -68,7 +68,7 @@ func (repository *Repository) SuspendStudent(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := models.ValidateStudentsExists([]string{studentSuspension.StudentEmail}, repository.connection); dbError != nil {
+	if userError, dbError := ValidateStudentsExists([]string{studentSuspension.StudentEmail}, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -76,7 +76,7 @@ func (repository *Repository) SuspendStudent(context *gin.Context) {
 		return
 	}
 
-	if dbError := models.SuspendStudent(studentSuspension.StudentEmail, repository.connection); dbError != nil {
+	if dbError := SuspendStudent(studentSuspension.StudentEmail, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	}
@@ -84,7 +84,7 @@ func (repository *Repository) SuspendStudent(context *gin.Context) {
 	context.JSON(http.StatusNoContent, nil)
 }
 
-func (repository *Repository) RetrieveCommonStudents(context *gin.Context) {
+func (controller *Controller) RetrieveCommonStudents(context *gin.Context) {
 	retrieveCommonStudentsRequest := &types.RetrieveCommonStudentsRequest{}
 
 	if contextErr := helpers.BindRetrieveCommonStudentsRequest(context, retrieveCommonStudentsRequest); contextErr != nil {
@@ -99,7 +99,7 @@ func (repository *Repository) RetrieveCommonStudents(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := models.ValidateTeachersExists(nonDuplicateTeacherEmails, repository.connection); dbError != nil {
+	if userError, dbError := ValidateTeachersExists(nonDuplicateTeacherEmails, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -107,7 +107,7 @@ func (repository *Repository) RetrieveCommonStudents(context *gin.Context) {
 		return
 	}
 
-	studentEmails, dbErr := models.RetrieveCommonStudents(nonDuplicateTeacherEmails, repository.connection)
+	studentEmails, dbErr := RetrieveCommonStudentEmails(nonDuplicateTeacherEmails, controller.connection)
 	if dbErr != nil {
 		generateInternalServerErrorResponse(context, dbErr)
 		return
@@ -118,7 +118,7 @@ func (repository *Repository) RetrieveCommonStudents(context *gin.Context) {
 	})
 }
 
-func (repository *Repository) RetrieveStudentRecipients(context *gin.Context) {
+func (controller *Controller) RetrieveStudentRecipients(context *gin.Context) {
 	retrieveStudentRecipientsRequest := &types.RetrieveStudentRecipientsRequest{}
 
 	if contextErr := helpers.BindRetrieveStudentRecipientsRequest(context, retrieveStudentRecipientsRequest); contextErr != nil {
@@ -131,7 +131,7 @@ func (repository *Repository) RetrieveStudentRecipients(context *gin.Context) {
 		return
 	}
 
-	if userError, dbError := models.ValidateTeachersExists([]string{retrieveStudentRecipientsRequest.TeacherEmail}, repository.connection); dbError != nil {
+	if userError, dbError := ValidateTeachersExists([]string{retrieveStudentRecipientsRequest.TeacherEmail}, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -141,7 +141,7 @@ func (repository *Repository) RetrieveStudentRecipients(context *gin.Context) {
 
 	mentionedStudents := helpers.RemoveDuplicatesInStringSlice(helpers.FindValidEmailsInText(retrieveStudentRecipientsRequest.NotificationMessage))
 
-	if userError, dbError := models.ValidateStudentsExists(mentionedStudents, repository.connection); dbError != nil {
+	if userError, dbError := ValidateStudentsExists(mentionedStudents, controller.connection); dbError != nil {
 		generateInternalServerErrorResponse(context, dbError)
 		return
 	} else if userError != nil {
@@ -149,7 +149,7 @@ func (repository *Repository) RetrieveStudentRecipients(context *gin.Context) {
 		return
 	}
 
-	recipientEmails, dbErr := models.RetrieveStudentRecipients(retrieveStudentRecipientsRequest.TeacherEmail, mentionedStudents, repository.connection)
+	recipientEmails, dbErr := RetrieveStudentRecipients(retrieveStudentRecipientsRequest.TeacherEmail, mentionedStudents, controller.connection)
 	if dbErr != nil {
 		generateInternalServerErrorResponse(context, dbErr)
 		return
@@ -160,15 +160,15 @@ func (repository *Repository) RetrieveStudentRecipients(context *gin.Context) {
 	})
 }
 
-func (repository *Repository) ClearDatabase(context *gin.Context) {
-	if err := models.ClearDatabase(repository.connection); err != nil {
+func (controller *Controller) ClearDatabase(context *gin.Context) {
+	if err := ClearDatabase(controller.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}
 	context.JSON(http.StatusNoContent, nil)
 }
 
-func (repository *Repository) PopulateStudents(context *gin.Context) {
+func (controller *Controller) PopulateStudents(context *gin.Context) {
 
 	populateStudentsRequest := &types.PopulateStudentsRequest{}
 
@@ -182,7 +182,7 @@ func (repository *Repository) PopulateStudents(context *gin.Context) {
 		return
 	}
 
-	if err := models.PopulateStudents(populateStudentsRequest.StudentEmails, repository.connection); err != nil {
+	if err := PopulateStudents(populateStudentsRequest.StudentEmails, controller.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}
@@ -190,7 +190,7 @@ func (repository *Repository) PopulateStudents(context *gin.Context) {
 	context.JSON(http.StatusNoContent, nil)
 }
 
-func (repository *Repository) PopulateTeachers(context *gin.Context) {
+func (controller *Controller) PopulateTeachers(context *gin.Context) {
 	populateTeachersRequest := &types.PopulateTeachersRequest{}
 
 	if contextErr := helpers.BindPopulateTeachersRequest(context, populateTeachersRequest); contextErr != nil {
@@ -203,7 +203,7 @@ func (repository *Repository) PopulateTeachers(context *gin.Context) {
 		return
 	}
 
-	if err := models.PopulateTeachers(populateTeachersRequest.TeacherEmails, repository.connection); err != nil {
+	if err := PopulateTeachers(populateTeachersRequest.TeacherEmails, controller.connection); err != nil {
 		generateInternalServerErrorResponse(context, err)
 		return
 	}

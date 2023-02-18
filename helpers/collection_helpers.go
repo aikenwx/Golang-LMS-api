@@ -49,6 +49,6 @@ func RemoveAllStringsInSlice(slice []string, stringsToRemove []string) []string 
 			result = append(result, str)
 		}
 	}
-	
+
 	return result
 }

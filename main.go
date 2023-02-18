@@ -16,7 +16,7 @@ func main() {
 func setupRouter(connection *database.Connection) *gin.Engine {
 
 	router := gin.Default()
-	repository := controllers.NewRepository(connection)
+	repository := controllers.NewController(connection)
 
 	router.POST("/api/register", repository.RegisterStudentsToTeacher)
 	router.GET("/api/commonstudents", repository.RetrieveCommonStudents)
