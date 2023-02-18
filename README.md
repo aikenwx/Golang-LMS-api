@@ -25,7 +25,7 @@ students and teachers as well as an API to clear all tables in the database
    Request body example:
 
    ```json
-   {"students": ["student1@gmail.com","student2@gmail.com", "student3@gmail.com"]}
+   {"students": ["student1@gmail.com","student2@gmail.com","student3@gmail.com"]}
    ```
 
 3. Endpoint: POST /api/populatestudents
@@ -37,7 +37,7 @@ students and teachers as well as an API to clear all tables in the database
    Request body example:
 
    ```json
-   {"teachers": ["teacher1@gmail.com", "teacher2@gmail.com"]}
+   {"teachers": ["teacher1@gmail.com","teacher2@gmail.com"]}
    ```
 
 2. Endpoint: POST /api/register
@@ -49,7 +49,7 @@ students and teachers as well as an API to clear all tables in the database
    Request body example:
 
    ```json
-   {"teacher": "teacher1@gmail.com","students": ["student1@gmail.com","student2@gmail.com"]}
+   {"teacher":"teacher1@gmail.com","students":["student1@gmail.com","student2@gmail.com"]}
    ```
 
 3. Endpoint: GET /api/commonstudents
@@ -61,7 +61,7 @@ students and teachers as well as an API to clear all tables in the database
    Success response body example:
 
       ```json
-   {"students": ["student1@gmail.com","student2@gmail.com"]}
+   {"students":["student1@gmail.com","student2@gmail.com"]}
    ```
         
 4. Endpoint: POST /api/suspend
@@ -72,7 +72,7 @@ students and teachers as well as an API to clear all tables in the database
 
    Request body example:
       ```json
-   {"student": ["student1@gmail.com"]}
+   {"student":["student1@gmail.com"]}
    ```
    
 4. Endpoint: POST /api/retrievefornotifications
@@ -83,11 +83,11 @@ students and teachers as well as an API to clear all tables in the database
 
    Request body example:
    ```json
-   {"teacher": "teacher1@gmail.com","notification":  "Hello students @student3@gmail.com"}
+   {"teacher":"teacher1@gmail.com","notification":"Hello students @student3@gmail.com"}
    ```
    Success response body example:
    ```json
-   {"students": ["student2@gmail.com","student3@gmail.com, "]}
+   {"students":["student2@gmail.com","student3@gmail.com"]}
    ```
 ## Error Messages:
 Invalid requests will result in a code 400 response and can be attributed to 5 types of errors:
@@ -179,4 +179,4 @@ in your own local mysql server.
 
    ![img_2.png](img_2.png)
 
-5. Alternatively, the tests can be run on an IDE such as golang
+5. Alternatively, the tests can be run on an IDE such as Goland
