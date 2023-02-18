@@ -14,6 +14,8 @@ import (
 	"testing"
 )
 
+// change accordingly
+
 const TEST_USERNAME string = "root"
 const TEST_PASSWORD string = ""
 const TEST_HOST string = "localhost"
