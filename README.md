@@ -117,7 +117,7 @@ Invalid requests will result in a code 400 response and can be attributed to 5 t
    ``` 
 5. Invalid content type header. Occurs when provided header for content type is not application/json for POST requests
    ```json
-   "message":"Content-Type header must be application/json"}
+   {"message":"Content-Type header must be application/json"}
    ```
 
 ## Design Patterns:
