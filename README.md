@@ -5,7 +5,7 @@
 students and teachers as well as an API to clear all tables in the database
 
 ## Hosted link
-- An online instance of the server is hosted at [this link](http://18.183.14.140:8080)
+- (Update) The online instance of the server has since been taken down
 
 ## Implemented API endpoints:
 
